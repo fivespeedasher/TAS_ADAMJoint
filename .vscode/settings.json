@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "*.json": "jsonc",
+        "*.m": "matlab",
+        "sstream": "cpp",
+        "string": "cpp",
+        "cerrno": "cpp",
+        "random": "cpp",
+        "ostream": "cpp",
+        "iostream": "cpp"
+    }
+}
