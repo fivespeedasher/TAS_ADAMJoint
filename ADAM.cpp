@@ -1,4 +1,4 @@
-// FIXME 更改成TCP连接
+// 采用Modbus-TCP连接
 
 
 #include <iostream>
@@ -7,7 +7,9 @@
 #include <unistd.h> // sleep
 #include <string.h>
 #include "ADAM.h"
+#include <fcntl.h>
 using namespace std;
+
 /**
  * @brief Construct a new ADAM::ADAM (TCP) object
  * 
@@ -15,9 +17,24 @@ using namespace std;
 ADAM::ADAM(const char *ip, int port) {
     this->ip = ip;
     this->port = port;
-    modbus_t *ctx = nullptr;
+    modbus_t *ctx;
 }
 ADAM::~ADAM() {}
+
+
+int ADAM::set_non_blocking(int fd) {
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1) {
+        cerr << "Error getting flags: " << strerror(errno) << endl;
+        return -1;
+    }
+
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        cerr << "Error setting non-blocking mode: " << strerror(errno) << endl;
+        return -1;
+    }
+    return 0;
+}
 
 /**
  * @brief 打开端口、创建连接
@@ -25,7 +42,7 @@ ADAM::~ADAM() {}
  * @param debug true:启用调试模式，会打印报文信息
  * @return int 
  */
-int ADAM::connect(bool debug, int slave_id) { // TODO 重载串口连接
+int ADAM::connect(bool debug) { // TODO 重载串口连接
     this->ctx = modbus_new_tcp(this->ip, this->port);
     
     // 打开端口
@@ -39,9 +56,6 @@ int ADAM::connect(bool debug, int slave_id) { // TODO 重载串口连接
     // 启用调试模式
     modbus_set_debug(ctx, debug);
 
-    // 设置从机地址
-    modbus_set_slave(this->ctx, slave_id);
-
     // connect
     if(modbus_connect(this->ctx) == -1) {
         cerr << "Connection to slave failed: " << modbus_strerror(errno) << endl;
@@ -49,7 +63,34 @@ int ADAM::connect(bool debug, int slave_id) { // TODO 重载串口连接
         modbus_close(this->ctx);
         return -1;
     }
+    sleep(1);
     
+    // 获取底层的套接字文件描述符
+    int sockfd = modbus_get_socket(ctx);
+    if (set_non_blocking(sockfd) == -1) {
+        modbus_free(ctx);
+        return -1;
+    }
+
+    // 等待连接完成
+    fd_set writefds;
+    struct timeval tv;
+    tv.tv_sec = 2;  // 2秒超时
+    tv.tv_usec = 0;
+    FD_ZERO(&writefds);
+    FD_SET(sockfd, &writefds);
+
+    int retval = select(sockfd + 1, NULL, &writefds, NULL, &tv);
+    if (retval == -1) {
+        cerr << "Select error: " << strerror(errno) << endl;
+        modbus_free(ctx);
+        return -1;
+    } else if (retval == 0) {
+        cerr << "Connection timeout" << endl;
+        modbus_free(ctx);
+        return -1;
+    }
+    this->ctx = ctx;
     return 0;
 }
 
@@ -64,6 +105,7 @@ ADAM4051::ADAM4051(const ADAM& adam, int slave_id, int total_coils)
     this->slave_id = slave_id;
     this->total_coils = total_coils;
     this->state_coils = vector<uint8_t>(total_coils, false);
+    this->ctx = adam.ctx;
 }
 ADAM4051::~ADAM4051() {}
 
@@ -71,22 +113,16 @@ ADAM4051::~ADAM4051() {}
  * @brief 使用modbus_read_bits实时读取所有DI线圈的状态
  */
 int ADAM4051::read_coils() {
-    connect(false, this->slave_id); // 连接从机
+    if (ctx == NULL) {
+        fprintf(stderr, "Modbus context or file descriptor is invalid\n");
+        return -1;
+    } else {modbus_set_slave(ctx, slave_id);} 
 
-    // // 读取一次线圈状态,并对线圈状态进行更新
-    // if (this->ctx == NULL || this->ctx->s == -1) {
-    //     fprintf(stderr, "Modbus context or file descriptor is invalid\n");
-    //     return -1;
-    // }
-    sleep(1);
+    // 读取一次线圈状态,并对线圈状态进行更新
     if(modbus_read_bits(ctx, 0, total_coils, this->state_coils.data()) == -1) {
         cout << "Failed to read coils: " << modbus_strerror(errno) << endl;
-        // modbus_close(ctx);
-        // modbus_free(ctx);
         return -1;
     }
-    // modbus_free(this->ctx);
-    // modbus_close(this->ctx);
     return 0;
 }
 
@@ -94,6 +130,7 @@ ADAM4168::ADAM4168(const ADAM& adam, int slave_id, int total_channels, float dut
          : ADAM(adam.ip, adam.port) {
     this->slave_id = slave_id;
     this->total_channels = total_channels;
+    this->ctx = adam.ctx;
     InitPulse(duty_cycles); // 初始化脉冲频率
 }
 ADAM4168::~ADAM4168() {}
@@ -105,7 +142,10 @@ ADAM4168::~ADAM4168() {}
  * @return int 
  */
 int ADAM4168::InitPulse(float duty_cycles) {
-    connect(false, this->slave_id); // 连接从机
+    if (ctx == NULL) {
+        fprintf(stderr, "Modbus context or file descriptor is invalid\n");
+        return -1;
+    } else {modbus_set_slave(ctx, slave_id);} 
     SetMode({}); // 清空模式设置,否则写入脉冲频率会打开脉冲
     // 修改脉冲输出频率 （32bit）
     vector<uint16_t> Toffs(16, 0);
@@ -118,8 +158,6 @@ int ADAM4168::InitPulse(float duty_cycles) {
     // 写入脉冲输出高、低延时
     if(modbus_write_registers(ctx, 30, 16, Tons.data()) == -1 || modbus_write_registers(ctx, 72, 16, Toffs.data()) == -1) {
         cout << "Failed to write registers: " << modbus_strerror(errno) << endl;
-        // modbus_close(ctx);
-        // modbus_free(ctx);
         return -1;
     }
     return 0;
@@ -139,8 +177,6 @@ int ADAM4168::SetMode(const vector<int>& PulseChannel) {
     }
     if(modbus_write_registers(ctx, 64, this->total_channels, channels_mode.data()) == -1) {
         cout << "Failed to write registers: " << modbus_strerror(errno) << endl;
-        // modbus_close(ctx);
-        // modbus_free(ctx);
         return -1;
     }
     return 0;
@@ -155,7 +191,10 @@ int ADAM4168::SetMode(const vector<int>& PulseChannel) {
  * @return int 
  */
 int ADAM4168::StartPulse(const vector<int>& channels, uint16_t pulse_times) {
-    connect(false, this->slave_id); // 连接从机
+    if (ctx == NULL) {
+        fprintf(stderr, "Modbus context or file descriptor is invalid\n");
+        return -1;
+    } else {modbus_set_slave(ctx, slave_id);} 
     SetMode(channels); // 设置指定通道为脉冲输出模式
     
     // 设置脉冲输出次数 （32bit）
@@ -165,20 +204,19 @@ int ADAM4168::StartPulse(const vector<int>& channels, uint16_t pulse_times) {
     }
     if(modbus_write_registers(ctx, 32, this->total_channels * 2, pulse_times_all.data()) == -1) {
         cout << "Failed to write registers: " << modbus_strerror(errno) << endl;
-        // modbus_close(ctx);
-        // modbus_free(ctx);
         return -1;
     }
     return 0;
 }
 
 int ADAM4168::SetDO(int channels, bool value) {
-    connect(false, this->slave_id); // 连接从机
+    if (ctx == NULL) {
+        fprintf(stderr, "Modbus context or file descriptor is invalid\n");
+        return -1;
+    } else {modbus_set_slave(ctx, slave_id);} 
     // 设置脉冲输出次数 （32bit）
     if(modbus_write_bit(ctx, 16 + channels, value) == -1) {
         cout << "Failed to write registers: " << modbus_strerror(errno) << endl;
-        // modbus_close(ctx);
-        // modbus_free(ctx);
         return -1;
     }
     return 0;
@@ -200,13 +238,14 @@ ADAM4068::~ADAM4068() {}
  * @return int 
  */
 int ADAM4068::write_coil(int ch, bool flag) {
-    connect(false, this->slave_id); // 连接从机
+    if (ctx == NULL) {
+        fprintf(stderr, "Modbus context or file descriptor is invalid\n");
+        return -1;
+    } else {modbus_set_slave(ctx, slave_id);} 
     int mapped_ch = 16 + ch;
     // 16~23是modbus上的地址，0~7是用户输入的地址
     if(modbus_write_bit(ctx, mapped_ch, flag) == -1) {
         cout << "Failed to write coil: " << modbus_strerror(errno) << endl;
-        // modbus_close(ctx);
-        // modbus_free(ctx);
         return -1;
     }
     return 0;

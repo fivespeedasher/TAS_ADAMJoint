@@ -40,7 +40,7 @@ int main() {
 
     // 基类ADAM: 放置串口连接的参数
     ADAM adamPort1(remote_host, port);
-
+    adamPort1.connect(false); // 不调试状态下连接
     int slave_ID_4 = 4; // 从机地址
     int slave_ID_5 = 5;
     int slave_ID_6 = 6;
@@ -50,13 +50,13 @@ int main() {
     int duty_cycles = 0.5; // 脉冲占空比
     ADAM4051 adam_4(adamPort1, slave_ID_4, totalDI_4);
     ADAM4051 adam_5(adamPort1, slave_ID_5, totalDI_5);
-    // ADAM4168 adam_6(adamPort1, slave_ID_6, totalCH_6, duty_cycles);
+    ADAM4168 adam_6(adamPort1, slave_ID_6, totalCH_6, duty_cycles);
     
-    // bool RUN_status = true; // 行车灯状态
+    bool RUN_status = true; // 行车灯状态
 
     // adam_6.SetDO(RUNNING_LIGHT, RUN_status); // 打开行车灯
     while(true) {
-        // sleep(1);
+        sleep(1);
         if(adam_4.read_coils() != -1) {
             vector<uint8_t> state_coils_4 = adam_4.state_coils;
             cout << "ADAM-4051(4): ";
@@ -65,11 +65,11 @@ int main() {
                 cout << static_cast<int>(coil) << " ";
             }
             cout << endl;
-            // if(state_coils_4[0] == 1) {
-            //     // 启动左转向灯
-            //     vector<int> PulseChannel = {TURNING}; // 脉冲通道
-            //     adam_6.StartPulse(PulseChannel, BLINK); // 打开转向
-            // }
+            if(state_coils_4[0] == 1) {
+                // 启动左转向灯
+                vector<int> PulseChannel = {TURNING}; // 脉冲通道
+                adam_6.StartPulse(PulseChannel, BLINK); // 打开转向
+            }
         }
         if(adam_5.read_coils() != -1) {
             vector<uint8_t> state_coils_5 = adam_5.state_coils;
@@ -78,19 +78,18 @@ int main() {
                 cout << static_cast<int>(coil) << " ";
             }
             cout << endl;
-        //     if(state_coils_5[0] == 1) {
-        //         RUN_status = !RUN_status;
-        //         adam_6.SetDO(RUNNING_LIGHT, RUN_status); // 打开行车灯
-        //     }
+            if(state_coils_5[0] == 1) {
+                RUN_status = !RUN_status;
+                adam_6.SetDO(RUNNING_LIGHT, RUN_status); // 打开行车灯
+            }
         }
 
         // 检查是否有按键按下
         if (kbhit()) {
             cout << "Key pressed, exiting..." << endl;
-            adamPort1.disconnect();
             break;
         }
     }
-    // adamPort1.disconnect();
+    adamPort1.disconnect();
     return 0;
 }

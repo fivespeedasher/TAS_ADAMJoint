@@ -14,11 +14,9 @@ public:
     const char *ip;
     int port;
     modbus_t *ctx;
-    int connect(bool debug, int slave_id);
+    int set_non_blocking(int fd);
+    int connect(bool debug);
     int disconnect();
-protected:
-    int slave_id;
-    int total_coils;
 };
 
 class ADAM4051 : public ADAM
@@ -31,6 +29,7 @@ public:
 private:
     int slave_id;
     int total_coils;
+    modbus_t *ctx;
     using ADAM::connect; // 防止派生类外部访问，using在派生类中用于改变基类成员的访问权限，不需写形参
     using ADAM::disconnect; 
 };
@@ -47,6 +46,7 @@ public:
 private:
     int slave_id;
     int total_channels;
+    modbus_t *ctx;
     using ADAM::connect; // 防止派生类外部访问，using在派生类中用于改变基类成员的访问权限，不需写形参
     using ADAM::disconnect; 
 };

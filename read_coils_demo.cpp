@@ -5,37 +5,10 @@
 #include <unistd.h>
 #include <termios.h>
 #include <fcntl.h>
-#include "hv/TcpClient.h"
+// #include "hv/TcpClient.h"
 
 using namespace std;
-using namespace hv;
-
-
-// 检查是否有按键按下
-int kbhit(void) {
-    struct termios oldt, newt;
-    int ch;
-    int oldf;
-
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
-
-    ch = getchar();
-
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    fcntl(STDIN_FILENO, F_SETFL, oldf);
-
-    if(ch != EOF) {
-        ungetc(ch, stdin);
-        return 1;
-    }
-
-    return 0;
-}
+// using namespace hv;
 
 int main() {
     const char* remote_host = "192.168.3.1"; // remote ip
@@ -78,6 +51,18 @@ int main() {
             // 读取线圈状态
             vector<uint8_t> coils(16);
             while(1) {
+                modbus_close(ctx);
+
+                modbus_set_slave(ctx, 4);
+
+                // 连接到Modbus服务器
+                if (modbus_connect(ctx) == -1) {
+                    cerr << "Connection failed: " << modbus_strerror(errno) << endl;
+                    modbus_free(ctx);
+                    modbus_close(ctx);
+                    return -1;
+                }
+
                 sleep(1);
                 if(modbus_read_bits(ctx, 0, 16, coils.data()) == -1) {
                     cout << "Failed to read coils: " << modbus_strerror(errno) << endl;
@@ -90,13 +75,6 @@ int main() {
                     cout << static_cast<int>(coil) << " ";
                 }
                 cout << endl << endl;
-                sleep(1); // 1s
-
-                // 检查是否有按键按下
-                if (kbhit()) {
-                    cout << "Key pressed, exiting..." << endl;
-                    break;
-                }
             }
     //     } else {
     //         cerr << "Failed to connect to server!" << endl;
