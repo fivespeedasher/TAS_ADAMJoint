@@ -1,6 +1,5 @@
 // 采用Modbus-TCP连接
 
-
 #include <iostream>
 #include <errno.h>
 #include <vector>
@@ -227,6 +226,7 @@ ADAM4068::ADAM4068(const ADAM& adam, int slave_id, int total_coils)
     this->slave_id = slave_id;
     this->total_coils = total_coils;
     this->state_coils = vector<uint8_t>(total_coils, false);
+    this->ctx = adam.ctx;
 }
 ADAM4068::~ADAM4068() {}
 

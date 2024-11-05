@@ -1,0 +1,2 @@
+/usr/bin/ar qc libIncludeSrc.a CMakeFiles/IncludeSrc.dir/ADAM.cpp.o
+/usr/bin/ranlib libIncludeSrc.a

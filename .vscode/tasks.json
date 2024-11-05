@@ -8,10 +8,9 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
-                "ADAM.cpp",
+                "include/ADAM.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
-                "-lhv",
                 "-lmodbus"
             ],
             "options": {

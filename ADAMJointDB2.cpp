@@ -1,38 +1,12 @@
-#include "ADAM.h"
-#include "BulbConstants.h"
+#include "include/ADAM.h"
+#include "include/BulbConstants.h"
 #include <iostream>
 #include <vector>
 #include <termios.h> //TCSANOW
 #include <string.h>
 #include <fcntl.h> // fcntl
-#include <hv/TcpClient.h>
 
 using namespace std;
-
-bool kbhit() {
-    termios oldt, newt;
-    int ch;
-    int oldf;
-
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
-
-    ch = getchar();
-
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    fcntl(STDIN_FILENO, F_SETFL, oldf);
-
-    if(ch != EOF) {
-        ungetc(ch, stdin);
-        return true;
-    }
-
-    return false;
-}
 
 int main() {
     const char* remote_host = "192.168.3.1"; // remote ip
@@ -78,16 +52,10 @@ int main() {
                 cout << static_cast<int>(coil) << " ";
             }
             cout << endl;
-            if(state_coils_5[0] == 1) {
-                RUN_status = !RUN_status;
-                adam_6.SetDO(RUNNING_LIGHT, RUN_status); // 打开行车灯
-            }
-        }
-
-        // 检查是否有按键按下
-        if (kbhit()) {
-            cout << "Key pressed, exiting..." << endl;
-            break;
+            // if(state_coils_5[0] == 1) {
+            //     RUN_status = !RUN_status;
+            //     adam_6.SetDO(RUNNING_LIGHT, RUN_status); // 打开行车灯
+            // }
         }
     }
     adamPort1.disconnect();

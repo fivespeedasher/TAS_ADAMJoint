@@ -61,6 +61,7 @@ public:
 private:
     int slave_id;
     int total_coils;
+    modbus_t *ctx;
     using ADAM::connect; // 防止派生类外部访问，using在派生类中用于改变基类成员的访问权限，不需写形参
     using ADAM::disconnect; 
 };
