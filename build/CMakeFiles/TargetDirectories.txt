@@ -1,0 +1,6 @@
+/home/jushawn/projects/TAS_LAN_464E/build/CMakeFiles/run.dir
+/home/jushawn/projects/TAS_LAN_464E/build/CMakeFiles/edit_cache.dir
+/home/jushawn/projects/TAS_LAN_464E/build/CMakeFiles/rebuild_cache.dir
+/home/jushawn/projects/TAS_LAN_464E/build/include/CMakeFiles/IncludeSrc.dir
+/home/jushawn/projects/TAS_LAN_464E/build/include/CMakeFiles/edit_cache.dir
+/home/jushawn/projects/TAS_LAN_464E/build/include/CMakeFiles/rebuild_cache.dir

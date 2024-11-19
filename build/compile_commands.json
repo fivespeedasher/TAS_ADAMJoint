@@ -1,0 +1,17 @@
+[
+{
+  "directory": "/home/jushawn/projects/TAS_LAN_464E/build",
+  "command": "/usr/bin/g++ -g -o CMakeFiles/run.dir/test.cpp.o -c /home/jushawn/projects/TAS_LAN_464E/test.cpp",
+  "file": "/home/jushawn/projects/TAS_LAN_464E/test.cpp"
+},
+{
+  "directory": "/home/jushawn/projects/TAS_LAN_464E/build",
+  "command": "/usr/bin/g++ -g -o include/CMakeFiles/IncludeSrc.dir/ADAM.cpp.o -c /home/jushawn/projects/TAS_LAN_464E/include/ADAM.cpp",
+  "file": "/home/jushawn/projects/TAS_LAN_464E/include/ADAM.cpp"
+},
+{
+  "directory": "/home/jushawn/projects/TAS_LAN_464E/build",
+  "command": "/usr/bin/g++ -g -o include/CMakeFiles/IncludeSrc.dir/ControlRequest.cpp.o -c /home/jushawn/projects/TAS_LAN_464E/include/ControlRequest.cpp",
+  "file": "/home/jushawn/projects/TAS_LAN_464E/include/ControlRequest.cpp"
+}
+]

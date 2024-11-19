@@ -9,6 +9,7 @@
                 "-g",
                 "${file}",
                 "include/ADAM.cpp",
+                "include/ControlRequest.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lmodbus"

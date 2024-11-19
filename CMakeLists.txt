@@ -10,7 +10,7 @@ aux_source_directory(ADAMJointDB3.cpp DIR_SRCS)
 add_subdirectory(include)
 
 # 设定主文件
-set(MAIN_FILE ADAMJointDB3.cpp)
+set(MAIN_FILE test.cpp)
 
 # 指定生成目标
 add_executable(run ${DIR_SRCS} ${MAIN_FILE})
