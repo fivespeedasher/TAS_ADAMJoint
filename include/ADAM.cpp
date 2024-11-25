@@ -194,6 +194,7 @@ int ADAM4168::StartPulse(const vector<int>& channels, uint16_t pulse_times) {
         fprintf(stderr, "Modbus context or file descriptor is invalid\n");
         return -1;
     } else {modbus_set_slave(ctx, slave_id);} 
+    SetMode({}); // FIXME 
     SetMode(channels); // 设置指定通道为脉冲输出模式
     
     // 设置脉冲输出次数 （32bit）

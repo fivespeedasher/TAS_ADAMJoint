@@ -40,10 +40,12 @@ const int TURNING_RIGHT_LIGHT = 4; // 右转向灯
 const int REVERSING_LIGHT = 5; // 倒车灯
 const int BRAKE_LIGHT = 6; // 刹车灯
 
-// 其他常量定义
+// 其他数量与逻辑号定义
 const int BLINK = 3; // 转向灯闪烁次数
-const int FRONT = 0; // 前方辊筒
-const int REAR = 1; // 后方辊筒
+const bool FRONT = 0; // 前方辊筒
+const bool REAR = 1; // 后方辊筒
+const bool LEFT = 0; // 左转向
+const bool RIGHT = 1; // 右转向
 
 
 

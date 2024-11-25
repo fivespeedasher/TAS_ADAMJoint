@@ -26,6 +26,9 @@ int main() {
     ADAM4068 adam_1(adamPort2, slave_ID_1, totalCH_1);
     ADAM4068 adam_2(adamPort2, slave_ID_2, totalCH_2);
     ADAM4068 adam_3(adamPort2, slave_ID_3, totalCH_3);
+    ADAM4051 adam_4(adamPort1, slave_ID_4, totalDI_4);
+    ADAM4051 adam_5(adamPort1, slave_ID_5, totalDI_5);
+    ADAM4168 adam_6(adamPort1, slave_ID_6, totalCH_6, duty_cycles);
     
     bool RUN_status = true; // 行车灯状态
 

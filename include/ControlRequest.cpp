@@ -2,48 +2,10 @@
 #include "ControlRequest.h"
 #include <iostream>
 using namespace std;
-ControlRequest::ControlRequest(const char *ip, int port)
-    : Port2(ip, port), adam_1(Port2, slave_ID_1, totalCH_1), 
-    adam_2(Port2, slave_ID_2, totalCH_2), adam_3(Port2, slave_ID_3, totalCH_3), 
-    adam_4(Port2, slave_ID_4, totalDI_4), adam_5(Port2, slave_ID_5, totalDI_5), 
-    adam_6(Port2, slave_ID_6, totalCH_6, duty_cycles) {}
+ControlRequest::ControlRequest( ADAM4068& adam_1, ADAM4068& adam_2, ADAM4068& adam_3, ADAM4051& adam_4, ADAM4051& adam_5, ADAM4168& adam_6)
+    : adam_1(adam_1), adam_2(adam_2), adam_3(adam_3), 
+    adam_4(adam_4), adam_5(adam_5), adam_6(adam_6) {}
 ControlRequest::~ControlRequest() {}
-
-int ControlRequest::connect() {
-    if (Port2.connect(false) != 0) {
-        return -1;
-    }
-    // 初始化通道与DIO
-    // int slave_ID_1 = 1; // 从机地址
-    // int totalCH_1 = 8; // 从机通道总数
-    // int slave_ID_2 = 2; // 从机地址
-    // int totalCH_2 = 8; // 从机通道总数
-    // int slave_ID_3 = 3; // 从机地址
-    // int totalCH_3 = 8; // 从机通道总数
-
-    // int slave_ID_4 = 4; // 从机地址
-    // int slave_ID_5 = 5;
-    // int slave_ID_6 = 6;
-    // int totalDI_4 = 16; // 从机DI总数
-    // int totalDI_5 = 16;
-    // int totalCH_6 = 8; // 从机通道总数
-    // int duty_cycles = 0.5; // 脉冲占空比
-
-    // this->adam_1 = ADAM4068(Port2, slave_ID_1, totalCH_1);
-    // this->adam_2 = ADAM4068(Port2, slave_ID_2, totalCH_2);
-    // this->adam_3 = ADAM4068(Port2, slave_ID_3, totalCH_3);
-    // this->adam_4 = ADAM4051(Port2, slave_ID_4, totalDI_4);
-    // this->adam_5 = ADAM4051(Port2, slave_ID_5, totalDI_5);
-    // this->adam_6 = ADAM4168(Port2, slave_ID_6, totalCH_6, duty_cycles);
-
-    //TODO 初始化显示屏
-    return 0;
-}
-// 断开连接
-int ControlRequest::disconnect() {
-    Port2.disconnect();
-    return 0;
-}
 
 // 控制警示灯
 int ControlRequest::controlWarningLight(bool state) {
@@ -72,6 +34,10 @@ int ControlRequest::stopStatusLight() {
     return 0;
 }
 
+// 控制舱内灯
+int ControlRequest::controlCabinLight(bool state) {
+    adam_1.write_coil(CABIN_LIGHT, state);
+}
 
 /**
  * @brief 控制货物往左输送
@@ -80,18 +46,17 @@ int ControlRequest::stopStatusLight() {
  * @return int 
  */
 int ControlRequest::controlDeliverToLeft(bool whichRoller) {
+    // 左方阻挡升起 0 1
+    adam_2.write_coil(LEFT_BLOCKER_DOWN, false);
+    adam_2.write_coil(LEFT_BLOCKER_UP, true);
+    sleep(1);
     if (whichRoller == FRONT) {
-        // 左方阻挡升起 0 1
-        adam_2.write_coil(LEFT_BLOCKER_UP, true);
         // 前辊筒左送 1 0
         adam_2.write_coil(FRONT_ROLLER_LEFT, true);
         
     } else {
-        // 左后阻挡升起
-        adam_2.write_coil(RIGHT_BLOCKER_UP, true);
         // 后辊筒左送
         adam_2.write_coil(REAR_ROLLER_LEFT, true);
-
     }
     return 0;
 }
@@ -103,15 +68,15 @@ int ControlRequest::controlDeliverToLeft(bool whichRoller) {
  * @return int 
  */
 int ControlRequest::controlDeliverToRight(bool whichRoller) {
+    // 右方阻挡升起 0 1
+    adam_2.write_coil(RIGHT_BLOCKER_DOWN, false);
+    adam_2.write_coil(RIGHT_BLOCKER_UP, true);
+    sleep(1);
     if (whichRoller == FRONT) {
-        // 右前阻挡升起 0 1
-        adam_2.write_coil(LEFT_BLOCKER_UP, true);
         // 前辊筒右送 1 0
         adam_2.write_coil(FRONT_ROLLER_RIGHT, true);
         
     } else {
-        // 右后阻挡升起
-        adam_2.write_coil(RIGHT_BLOCKER_UP, true);
         // 后辊筒右送
         adam_2.write_coil(REAR_ROLLER_RIGHT, true);
     }
@@ -120,10 +85,6 @@ int ControlRequest::controlDeliverToRight(bool whichRoller) {
 
 // 停止辊筒输送
 int ControlRequest::stopDeliver() {
-    // 左方阻挡落下
-    adam_2.write_coil(LEFT_BLOCKER_DOWN, true);
-    // 右方阻挡落下
-    adam_2.write_coil(RIGHT_BLOCKER_DOWN, true);
 
     // 前辊筒停止
     adam_2.write_coil(FRONT_ROLLER_LEFT, false);
@@ -131,6 +92,16 @@ int ControlRequest::stopDeliver() {
     // 后辊筒停止
     adam_2.write_coil(REAR_ROLLER_LEFT, false);
     adam_2.write_coil(REAR_ROLLER_RIGHT, false);
+
+    sleep(1);
+    // 左方阻挡落下
+    adam_2.write_coil(LEFT_BLOCKER_UP, false);
+    adam_2.write_coil(LEFT_BLOCKER_DOWN, true);
+    sleep(1);
+    // 右方阻挡落下
+    adam_2.write_coil(RIGHT_BLOCKER_UP, false);
+    adam_2.write_coil(RIGHT_BLOCKER_DOWN, true);
+
     return 0;
 }
 
@@ -223,18 +194,19 @@ int ControlRequest::controlTurningLight(bool direction) {
     } else {
         PulseChannel = {TURNING_LEFT_LIGHT};
     }
+    // TODO DO Status置零
     adam_6.StartPulse(PulseChannel, BLINK); // 打开转向
     return 0;
 }
 // 打开近光灯,会自动关闭远光灯
 int ControlRequest::controlNearLight(bool state) {
-    controlFarLight(false); // 关闭远光灯
+    adam_6.SetDO(FAR_LIGHT, false); // 关闭远光灯
     adam_6.SetDO(NEAR_LIGHT, state); // 打开近光灯
     return 0;
 }
 // 打开远光灯,会自动关闭近光灯
 int ControlRequest::controlFarLight(bool state) {
-    controlNearLight(false); // 关闭近光灯
+    adam_6.SetDO(NEAR_LIGHT, false); // 关闭近光灯
     adam_6.SetDO(FAR_LIGHT, state); // 打开远光灯
     return 0;
 }

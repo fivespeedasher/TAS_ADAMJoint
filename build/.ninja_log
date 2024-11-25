@@ -1,3 +1,7 @@
 # ninja log v5
 0	253	1731545439109064562	CMakeFiles/run.dir/ADAMJointDB3.cpp.o	317d922dca940afa
-0	328	1731545439178602484	include/CMakeFiles/IncludeSrc.dir/ADAM.cpp.o	a9b3f7e74f6521a6
+1	939	1732502786500527041	include/CMakeFiles/IncludeSrc.dir/ADAM.cpp.o	a9b3f7e74f6521a6
+0	784	1732502786359693746	CMakeFiles/run.dir/test.cpp.o	3786bda0e20df8f3
+1	932	1732502786489693704	include/CMakeFiles/IncludeSrc.dir/ControlRequest.cpp.o	a48c3ce764d64e51
+939	982	1732502786554693689	include/libIncludeSrc.a	49835253e7fffa0b
+982	1272	1732502786847193614	run	f5a6977c84614dfd

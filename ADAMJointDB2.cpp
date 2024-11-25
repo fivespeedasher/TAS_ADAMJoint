@@ -30,33 +30,36 @@ int main() {
 
     // adam_6.SetDO(RUNNING_LIGHT, RUN_status); // 打开行车灯
     while(true) {
-        sleep(1);
-        if(adam_4.read_coils() != -1) {
-            vector<uint8_t> state_coils_4 = adam_4.state_coils;
-            cout << "ADAM-4051(4): ";
-            // 4051COM悬空时，DI=1表示接收到了低电平
-            for(auto coil: state_coils_4) {
-                cout << static_cast<int>(coil) << " ";
-            }
-            cout << endl;
-            if(state_coils_4[0] == 1) {
-                // 启动左转向灯
-                vector<int> PulseChannel = {TURNING}; // 脉冲通道
-                adam_6.StartPulse(PulseChannel, BLINK); // 打开转向
-            }
-        }
-        if(adam_5.read_coils() != -1) {
-            vector<uint8_t> state_coils_5 = adam_5.state_coils;
-            cout << "ADAM-4051(5): ";
-            for(auto coil: state_coils_5) {
-                cout << static_cast<int>(coil) << " ";
-            }
-            cout << endl;
-            // if(state_coils_5[0] == 1) {
-            //     RUN_status = !RUN_status;
-            //     adam_6.SetDO(RUNNING_LIGHT, RUN_status); // 打开行车灯
-            // }
-        }
+        sleep(5);
+        vector<int> PulseChannel = {TURNING_LEFT_LIGHT}; // 脉冲通道
+        adam_6.StartPulse(PulseChannel, BLINK); // 打开转向
+
+        // if(adam_4.read_coils() != -1) {
+        //     vector<uint8_t> state_coils_4 = adam_4.state_coils;
+        //     cout << "ADAM-4051(4): ";
+        //     // 4051COM悬空时，DI=1表示接收到了低电平
+        //     for(auto coil: state_coils_4) {
+        //         cout << static_cast<int>(coil) << " ";
+        //     }
+        //     cout << endl;
+        //     if(state_coils_4[0] == 1) {
+        //         // 启动左转向灯
+        //         vector<int> PulseChannel = {TURNING}; // 脉冲通道
+        //         adam_6.StartPulse(PulseChannel, BLINK); // 打开转向
+        //     }
+        // }
+        // if(adam_5.read_coils() != -1) {
+        //     vector<uint8_t> state_coils_5 = adam_5.state_coils;
+        //     cout << "ADAM-4051(5): ";
+        //     for(auto coil: state_coils_5) {
+        //         cout << static_cast<int>(coil) << " ";
+        //     }
+        //     cout << endl;
+        //     // if(state_coils_5[0] == 1) {
+        //     //     RUN_status = !RUN_status;
+        //     //     adam_6.SetDO(RUNNING_LIGHT, RUN_status); // 打开行车灯
+        //     // }
+        // }
     }
     adamPort1.disconnect();
     return 0;
