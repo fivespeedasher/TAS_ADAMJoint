@@ -31,6 +31,19 @@ const int HORN_2 = 5; // 喇叭输出通道2
 const int HORN_3 = 6; // 喇叭输出通道3
 const int HORN_4 = 7; // 喇叭输出通道4
 
+// slave_4 io定义
+//0 1 0 0 1 0 0 1 0 0 1 0 1 1 0 0 全下
+//1 0 0 0 0 0 0 1 0 0 1 0 1 1 0 0 左上右下
+//0 1 0 0 1 0 1 0 0 1 0 0 1 1 0 0 左下右上
+const int LEFT_BLOCKER_UP_POSITION = 0; // 左阻挡升起到位
+const int LEFT_BLOCKER_DOWN_POSITION = 1; // 左阻挡下落到位
+const int LEFT_FRONT_SENSOR = 2; // 左前到位传感器
+const int LEFT_REAR_SENSOR = 5; // 左后到位传感器
+const int RIGHT_BLOCKER_UP_POSITION  = 6; // 右阻挡升起到位
+const int RIGHT_BLOCKER_DOWN_POSITION = 7; // 右阻挡下落到位
+const int RIGHT_FRONT_SENSOR = 8; // 右前到位传感器
+const int RIGHT_REAR_SENSOR = 11; // 右后到位传感器
+
 // slave_6 io定义
 const int RUNNING_LIGHT = 0; // 行车灯
 const int NEAR_LIGHT = 1; // 近光灯

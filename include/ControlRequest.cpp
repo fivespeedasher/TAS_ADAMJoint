@@ -37,8 +37,10 @@ int ControlRequest::stopStatusLight() {
 // 控制舱内灯
 int ControlRequest::controlCabinLight(bool state) {
     adam_1.write_coil(CABIN_LIGHT, state);
+    return 0;
 }
 
+// FIXME 根据阻挡到位关DO
 /**
  * @brief 控制货物往左输送
  * 
@@ -49,15 +51,20 @@ int ControlRequest::controlDeliverToLeft(bool whichRoller) {
     // 左方阻挡升起 0 1
     adam_2.write_coil(LEFT_BLOCKER_DOWN, false);
     adam_2.write_coil(LEFT_BLOCKER_UP, true);
-    sleep(1);
-    if (whichRoller == FRONT) {
-        // 前辊筒左送 1 0
-        adam_2.write_coil(FRONT_ROLLER_LEFT, true);
-        
-    } else {
-        // 后辊筒左送
-        adam_2.write_coil(REAR_ROLLER_LEFT, true);
+    bool up_state = ControlRequest::readPositionSensor()[LEFT_BLOCKER_UP_POSITION];
+    if(up_state == 1) {
+        // 左方阻挡升起到位
+        adam_2.write_coil(LEFT_BLOCKER_UP, false);
+        if (whichRoller == FRONT) {
+            // 前辊筒左送 1 0
+            adam_2.write_coil(FRONT_ROLLER_LEFT, true);
+            
+        } else {
+            // 后辊筒左送
+            adam_2.write_coil(REAR_ROLLER_LEFT, true);
+        }
     }
+    else {return -1;}
     return 0;
 }
 
@@ -71,21 +78,25 @@ int ControlRequest::controlDeliverToRight(bool whichRoller) {
     // 右方阻挡升起 0 1
     adam_2.write_coil(RIGHT_BLOCKER_DOWN, false);
     adam_2.write_coil(RIGHT_BLOCKER_UP, true);
-    sleep(1);
-    if (whichRoller == FRONT) {
-        // 前辊筒右送 1 0
-        adam_2.write_coil(FRONT_ROLLER_RIGHT, true);
-        
-    } else {
-        // 后辊筒右送
-        adam_2.write_coil(REAR_ROLLER_RIGHT, true);
+    bool up_state = ControlRequest::readPositionSensor()[RIGHT_BLOCKER_UP_POSITION];
+    if(up_state == 1) {
+        // 左方阻挡升起到位
+        adam_2.write_coil(RIGHT_BLOCKER_UP, false);
+        if (whichRoller == FRONT) {
+            // 前辊筒右送 1 0
+            adam_2.write_coil(FRONT_ROLLER_RIGHT, true);
+            
+        } else {
+            // 后辊筒右送
+            adam_2.write_coil(REAR_ROLLER_RIGHT, true);
+        }
     }
+    else {return -1;}
     return 0;
 }
 
 // 停止辊筒输送
 int ControlRequest::stopDeliver() {
-
     // 前辊筒停止
     adam_2.write_coil(FRONT_ROLLER_LEFT, false);
     adam_2.write_coil(FRONT_ROLLER_RIGHT, false);
@@ -94,13 +105,20 @@ int ControlRequest::stopDeliver() {
     adam_2.write_coil(REAR_ROLLER_RIGHT, false);
 
     sleep(1);
-    // 左方阻挡落下
+    // 阻挡落下
     adam_2.write_coil(LEFT_BLOCKER_UP, false);
-    adam_2.write_coil(LEFT_BLOCKER_DOWN, true);
-    sleep(1);
-    // 右方阻挡落下
     adam_2.write_coil(RIGHT_BLOCKER_UP, false);
+
+    adam_2.write_coil(LEFT_BLOCKER_DOWN, true);
     adam_2.write_coil(RIGHT_BLOCKER_DOWN, true);
+    bool down_state_r = ControlRequest::readPositionSensor()[RIGHT_BLOCKER_DOWN_POSITION];
+    bool down_state_l = ControlRequest::readPositionSensor()[LEFT_BLOCKER_DOWN_POSITION];
+    if(down_state_r == 1 && down_state_l == 1) {
+        // 左右阻挡落下到位
+        adam_2.write_coil(LEFT_BLOCKER_DOWN, false);
+        adam_2.write_coil(RIGHT_BLOCKER_DOWN, false);
+    }
+    else {return -1;}
 
     return 0;
 }
@@ -165,7 +183,7 @@ vector<bool> ControlRequest::readPositionSensor() {
     cout << "Position Sensor : ";
     for (int i = 0; i < 16; i++) {
         positionSensor.push_back(adam_4.state_coils[i]);
-        cout << adam_4.state_coils[i] << " ";
+        cout << adam_4.state_coils[i] << " "; // TODO 检查输出
     }
     cout << endl;
     return positionSensor;
@@ -194,7 +212,6 @@ int ControlRequest::controlTurningLight(bool direction) {
     } else {
         PulseChannel = {TURNING_LEFT_LIGHT};
     }
-    // TODO DO Status置零
     adam_6.StartPulse(PulseChannel, BLINK); // 打开转向
     return 0;
 }

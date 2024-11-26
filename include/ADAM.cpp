@@ -41,7 +41,7 @@ int ADAM::set_non_blocking(int fd) {
  * @param debug true:启用调试模式，会打印报文信息
  * @return int 
  */
-int ADAM::connect(bool debug) { // TODO 重载串口连接
+int ADAM::connect(bool debug) {
     this->ctx = modbus_new_tcp(this->ip, this->port);
     
     // 打开端口
@@ -100,9 +100,7 @@ int ADAM::disconnect() {
 }
 
 ADAM4051::ADAM4051(const ADAM& adam, int slave_id, int total_coils)
-         : ADAM(adam.ip, adam.port) {
-    this->slave_id = slave_id;
-    this->total_coils = total_coils;
+         : ADAM(adam.ip, adam.port), slave_id(slave_id), total_coils(total_coils) {
     this->state_coils = vector<uint8_t>(total_coils, false);
     this->ctx = adam.ctx;
 }
@@ -126,9 +124,7 @@ int ADAM4051::read_coils() {
 }
 
 ADAM4168::ADAM4168(const ADAM& adam, int slave_id, int total_channels, float duty_cycles)
-         : ADAM(adam.ip, adam.port) {
-    this->slave_id = slave_id;
-    this->total_channels = total_channels;
+         : ADAM(adam.ip, adam.port), slave_id(slave_id), total_channels(total_channels) {
     this->ctx = adam.ctx;
     InitPulse(duty_cycles); // 初始化脉冲频率
 }
@@ -156,7 +152,7 @@ int ADAM4168::InitPulse(float duty_cycles) {
     }
     // 写入脉冲输出高、低延时
     if(modbus_write_registers(ctx, 30, 16, Tons.data()) == -1 || modbus_write_registers(ctx, 72, 16, Toffs.data()) == -1) {
-        cout << "Failed to write registers: " << modbus_strerror(errno) << endl;
+        cout << "Failed to write registers (InitPulse): " << modbus_strerror(errno) << endl;
         return -1;
     }
     return 0;
@@ -169,13 +165,17 @@ int ADAM4168::InitPulse(float duty_cycles) {
  * @return int 
  */
 int ADAM4168::SetMode(const vector<int>& PulseChannel) {
+    if (ctx == NULL) {
+        fprintf(stderr, "Modbus context or file descriptor is invalid\n");
+        return -1;
+    } else {modbus_set_slave(ctx, slave_id);} 
     //设定指定引脚为脉冲输出（pulse）模式
     vector<uint16_t> channels_mode(this->total_channels, 0);
     for(auto i : PulseChannel) {
         channels_mode[i] = 1;
     }
     if(modbus_write_registers(ctx, 64, this->total_channels, channels_mode.data()) == -1) {
-        cout << "Failed to write registers: " << modbus_strerror(errno) << endl;
+        cout << "Failed to write registers (SetMode): " << modbus_strerror(errno) << endl;
         return -1;
     }
     return 0;
@@ -194,7 +194,7 @@ int ADAM4168::StartPulse(const vector<int>& channels, uint16_t pulse_times) {
         fprintf(stderr, "Modbus context or file descriptor is invalid\n");
         return -1;
     } else {modbus_set_slave(ctx, slave_id);} 
-    SetMode({}); // FIXME 
+    SetMode({}); // 重置所有通道为电平输出模式
     SetMode(channels); // 设置指定通道为脉冲输出模式
     
     // 设置脉冲输出次数 （32bit）
@@ -203,7 +203,7 @@ int ADAM4168::StartPulse(const vector<int>& channels, uint16_t pulse_times) {
         pulse_times_all[channel * 2] = pulse_times;
     }
     if(modbus_write_registers(ctx, 32, this->total_channels * 2, pulse_times_all.data()) == -1) {
-        cout << "Failed to write registers: " << modbus_strerror(errno) << endl;
+        cout << "Failed to write registers (StartPulse): " << modbus_strerror(errno) << endl;
         return -1;
     }
     return 0;
@@ -214,18 +214,17 @@ int ADAM4168::SetDO(int channels, bool value) {
         fprintf(stderr, "Modbus context or file descriptor is invalid\n");
         return -1;
     } else {modbus_set_slave(ctx, slave_id);} 
+    SetMode({}); // 重置所有通道为电平输出模式
     // 设置脉冲输出次数 （32bit）
     if(modbus_write_bit(ctx, 16 + channels, value) == -1) {
-        cout << "Failed to write registers: " << modbus_strerror(errno) << endl;
+        cout << "Failed to write registers (SetDO): " << modbus_strerror(errno) << endl;
         return -1;
     }
     return 0;
 }
 
 ADAM4068::ADAM4068(const ADAM& adam, int slave_id, int total_coils)
-         : ADAM(adam.ip, adam.port) {
-    this->slave_id = slave_id;
-    this->total_coils = total_coils;
+         : ADAM(adam.ip, adam.port), slave_id(slave_id), total_coils(total_coils) {
     this->state_coils = vector<uint8_t>(total_coils, false);
     this->ctx = adam.ctx;
 }

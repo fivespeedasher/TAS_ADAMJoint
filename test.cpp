@@ -67,6 +67,7 @@ int main() {
     controller.controlTurningLight(LEFT);
     sleep(3);
     controller.controlTurningLight(RIGHT);
+    sleep(3);
 
     cout << "测试近光灯" << endl;
     controller.controlNearLight(true);
@@ -99,7 +100,7 @@ int main() {
     controller.controlDeliverToLeft(REAR); // 后辊筒
     sleep(3);
     controller.stopDeliver();
-    controller.controlDeliverToRight(FRONT); // 后辊筒
+    controller.controlDeliverToRight(FRONT); // 前辊筒
     controller.controlDeliverToRight(REAR); // 后辊筒
     sleep(3);
     controller.stopDeliver();
@@ -115,5 +116,16 @@ int main() {
     controller.riseRightRollingDoor();
     sleep(35);
 
+    // 测试到位传感器
+    // vector<bool> positionSensors;
+    // while(1) {
+    //     positionSensors = controller.readPositionSensor();
+    //     for(auto i : positionSensors) {
+    //         cout << i << ' ';
+    //     }
+    //     cout << endl;
+    //     sleep(1);
+    // }
+    
     return 0;
 }
