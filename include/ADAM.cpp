@@ -49,8 +49,8 @@ int ADAM::connect(bool debug) {
         cerr << "Unable to create the libmodbus context: " << modbus_strerror(errno) << endl;
         return -1;
     }
-    // 设置应答延时1s
-    modbus_set_response_timeout(ctx, 0 ,1000000);
+    // 设置应答延时3s
+    modbus_set_response_timeout(ctx, 0 ,3000000);
 
     // 启用调试模式
     modbus_set_debug(ctx, debug);
@@ -74,7 +74,7 @@ int ADAM::connect(bool debug) {
     // 等待连接完成
     fd_set writefds;
     struct timeval tv;
-    tv.tv_sec = 2;  // 2秒超时
+    tv.tv_sec = 3;  // 3秒超时
     tv.tv_usec = 0;
     FD_ZERO(&writefds);
     FD_SET(sockfd, &writefds);
@@ -137,11 +137,14 @@ ADAM4168::~ADAM4168() {}
  * @return int 
  */
 int ADAM4168::InitPulse(float duty_cycles) {
-    if (ctx == NULL) {
-        fprintf(stderr, "Modbus context or file descriptor is invalid\n");
-        return -1;
-    } else {modbus_set_slave(ctx, slave_id);} 
+    // if (ctx == NULL) {
+    //     fprintf(stderr, "Modbus context or file descriptor is invalid\n");
+    //     return -1;
+    // } else {modbus_set_slave(ctx, slave_id);} 
     SetMode({}); // 清空模式设置,否则写入脉冲频率会打开脉冲
+    for(int i = 0; i < 7; i++) {
+        ADAM4168::SetDO(i, 0); // DO置0
+    }
     // 修改脉冲输出频率 （32bit）
     vector<uint16_t> Toffs(16, 0);
     vector<uint16_t> Tons(16, 0);
@@ -214,7 +217,6 @@ int ADAM4168::SetDO(int channels, bool value) {
         fprintf(stderr, "Modbus context or file descriptor is invalid\n");
         return -1;
     } else {modbus_set_slave(ctx, slave_id);} 
-    SetMode({}); // 重置所有通道为电平输出模式
     // 设置脉冲输出次数 （32bit）
     if(modbus_write_bit(ctx, 16 + channels, value) == -1) {
         cout << "Failed to write registers (SetDO): " << modbus_strerror(errno) << endl;

@@ -13,5 +13,15 @@
   "directory": "/home/jushawn/projects/TAS_LAN_464E/build",
   "command": "/usr/bin/g++ -g -o include/CMakeFiles/IncludeSrc.dir/ControlRequest.cpp.o -c /home/jushawn/projects/TAS_LAN_464E/include/ControlRequest.cpp",
   "file": "/home/jushawn/projects/TAS_LAN_464E/include/ControlRequest.cpp"
+},
+{
+  "directory": "/home/jushawn/projects/TAS_LAN_464E/build",
+  "command": "/usr/bin/g++ -g -o include/CMakeFiles/IncludeSrc.dir/LEDScreenController.cpp.o -c /home/jushawn/projects/TAS_LAN_464E/include/LEDScreenController.cpp",
+  "file": "/home/jushawn/projects/TAS_LAN_464E/include/LEDScreenController.cpp"
+},
+{
+  "directory": "/home/jushawn/projects/TAS_LAN_464E/build",
+  "command": "/usr/bin/g++ -g -o include/CMakeFiles/IncludeSrc.dir/utils.cpp.o -c /home/jushawn/projects/TAS_LAN_464E/include/utils.cpp",
+  "file": "/home/jushawn/projects/TAS_LAN_464E/include/utils.cpp"
 }
 ]

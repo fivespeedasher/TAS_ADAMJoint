@@ -10,6 +10,8 @@
                 "${file}",
                 "include/ADAM.cpp",
                 "include/ControlRequest.cpp",
+                "include/LEDScreenController.cpp",
+                "include/utils.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lmodbus"

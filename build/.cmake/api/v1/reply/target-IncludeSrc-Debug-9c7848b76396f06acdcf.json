@@ -43,7 +43,9 @@
 			"sourceIndexes" : 
 			[
 				0,
-				1
+				1,
+				2,
+				3
 			]
 		}
 	],
@@ -62,7 +64,9 @@
 			"sourceIndexes" : 
 			[
 				0,
-				1
+				1,
+				2,
+				3
 			]
 		}
 	],
@@ -78,6 +82,18 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "include/ControlRequest.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "include/LEDScreenController.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "include/utils.cpp",
 			"sourceGroupIndex" : 0
 		}
 	],

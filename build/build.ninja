@@ -122,6 +122,18 @@ build include/CMakeFiles/IncludeSrc.dir/ControlRequest.cpp.o: CXX_COMPILER__Incl
   OBJECT_DIR = include/CMakeFiles/IncludeSrc.dir
   OBJECT_FILE_DIR = include/CMakeFiles/IncludeSrc.dir
 
+build include/CMakeFiles/IncludeSrc.dir/LEDScreenController.cpp.o: CXX_COMPILER__IncludeSrc_Debug /home/jushawn/projects/TAS_LAN_464E/include/LEDScreenController.cpp || cmake_object_order_depends_target_IncludeSrc
+  DEP_FILE = include/CMakeFiles/IncludeSrc.dir/LEDScreenController.cpp.o.d
+  FLAGS = -g
+  OBJECT_DIR = include/CMakeFiles/IncludeSrc.dir
+  OBJECT_FILE_DIR = include/CMakeFiles/IncludeSrc.dir
+
+build include/CMakeFiles/IncludeSrc.dir/utils.cpp.o: CXX_COMPILER__IncludeSrc_Debug /home/jushawn/projects/TAS_LAN_464E/include/utils.cpp || cmake_object_order_depends_target_IncludeSrc
+  DEP_FILE = include/CMakeFiles/IncludeSrc.dir/utils.cpp.o.d
+  FLAGS = -g
+  OBJECT_DIR = include/CMakeFiles/IncludeSrc.dir
+  OBJECT_FILE_DIR = include/CMakeFiles/IncludeSrc.dir
+
 
 # =============================================================================
 # Link build statements for STATIC_LIBRARY target IncludeSrc
@@ -130,7 +142,7 @@ build include/CMakeFiles/IncludeSrc.dir/ControlRequest.cpp.o: CXX_COMPILER__Incl
 #############################################
 # Link the static library include/libIncludeSrc.a
 
-build include/libIncludeSrc.a: CXX_STATIC_LIBRARY_LINKER__IncludeSrc_Debug include/CMakeFiles/IncludeSrc.dir/ADAM.cpp.o include/CMakeFiles/IncludeSrc.dir/ControlRequest.cpp.o
+build include/libIncludeSrc.a: CXX_STATIC_LIBRARY_LINKER__IncludeSrc_Debug include/CMakeFiles/IncludeSrc.dir/ADAM.cpp.o include/CMakeFiles/IncludeSrc.dir/ControlRequest.cpp.o include/CMakeFiles/IncludeSrc.dir/LEDScreenController.cpp.o include/CMakeFiles/IncludeSrc.dir/utils.cpp.o
   LANGUAGE_COMPILE_FLAGS = -g
   OBJECT_DIR = include/CMakeFiles/IncludeSrc.dir
   POST_BUILD = :
