@@ -91,7 +91,7 @@ int ControlRequest::controlDeliverToLeft(bool whichRoller) {
         sleep(1);
         // 左方阻挡升起到位
         adam_2.write_coil(LEFT_BLOCKER_UP, false); // 已到位，关闭输出
-        // ControlRequest::RollingToLeft(whichRoller);
+        ControlRequest::RollingToLeft(whichRoller);
         return 0;
     }
     else { return -1; }
@@ -126,7 +126,7 @@ int ControlRequest::controlDeliverToRight(bool whichRoller) {
         // 右方阻挡升起到位
         sleep(1);
         adam_2.write_coil(RIGHT_BLOCKER_UP, false); // 已到位，关闭输出
-        // ControlRequest::RollingToRight(whichRoller);
+        ControlRequest::RollingToRight(whichRoller);
         return 0;
     }
     else {
@@ -238,12 +238,12 @@ int ControlRequest::stopHorn() {
 vector<bool> ControlRequest::readPositionSensor() {
     vector<bool> positionSensor;
     adam_4.read_coils();
-    cout << "Position Sensor : ";
+    // cout << "Position Sensor : ";
     for (int i = 0; i < 16; i++) {
         positionSensor.push_back(adam_4.state_coils[i]);
-        cout << int(adam_4.state_coils[i]) << " "; // TODO 检查输出
+        // cout << int(adam_4.state_coils[i]) << " "; // 可用于检查输出
     }
-    cout << endl;
+    // cout << endl;
     return positionSensor;
 }
 

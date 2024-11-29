@@ -3,6 +3,7 @@
 #include <modbus.h>
 #include <vector>
 #include <string>
+#include <functional>
 
 using namespace std;
 
@@ -17,6 +18,8 @@ public:
     int set_non_blocking(int fd);
     int connect(bool debug);
     int disconnect();
+    int retry_operation(const function<int()>& operation, int retry_count = 5, float delay = 0.5);
+// protected:
 };
 
 class ADAM4051 : public ADAM

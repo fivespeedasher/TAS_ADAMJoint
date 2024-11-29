@@ -4,6 +4,7 @@
 #include "modbus.h"
 #include <string>
 #include <iostream>
+#include <functional>
 
 using namespace std;
 
@@ -18,7 +19,7 @@ class LEDScreenController {
         LEDScreenController(const char *ip, int port, bool setDebug);
         ~LEDScreenController();
         int set_non_blocking(int fd);
-        bool connect();
+        int connect();
         void disconnect();
 
         bool turnOn();
@@ -29,6 +30,9 @@ class LEDScreenController {
         // 编写M4018~N用于写入文本
         bool writeText(const string& text, uint16_t save_state);
         int initLED();
+
+        int retry_operation(const function<int()>& operation, int retry_count=5, float delay=0.5);
+
     private:
         const char *ip;
         int port;
