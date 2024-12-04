@@ -27,6 +27,7 @@ public:
     int stopRolling();
     int controlDeliverToLeft(bool whichRoller);
     int controlDeliverToRight(bool whichRoller);
+    int blockerDown();
     int stopDeliver();
     int riseLeftRollingDoor();
     int riseRightRollingDoor();

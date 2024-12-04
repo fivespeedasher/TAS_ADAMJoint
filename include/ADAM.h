@@ -46,6 +46,7 @@ public:
     int SetMode(const vector<int>& PulseChannel);
     int StartPulse(const vector<int>& channels, uint16_t pulse_times);
     int SetDO(int channels, bool value);
+    int SetDOs(int start, int nb, const uint8_t *src);
 private:
     int slave_id;
     int total_channels;
@@ -61,6 +62,7 @@ public:
     ~ADAM4068();
     vector<uint8_t> state_coils;
     int write_coil(int ch, bool flag);
+    int write_coils(int start, int nb, const uint8_t *src);
 private:
     int slave_id;
     int total_coils;

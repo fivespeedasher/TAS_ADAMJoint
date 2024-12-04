@@ -20,7 +20,7 @@ ADAM::ADAM(const char *ip, int port) {
     this->port = port;
     modbus_t *ctx;
 }
-ADAM::~ADAM() {}
+ADAM::~ADAM() {disconnect();}
 
 
 int ADAM::set_non_blocking(int fd) {
@@ -44,8 +44,8 @@ int ADAM::set_non_blocking(int fd) {
  * @return int 
  */
 int ADAM::connect(bool debug) {
-    int retry_count = 3;
-    while (retry_count > 0) {
+    int retry_connection = 3;
+    while (retry_connection > 0) {
 
         this->ctx = modbus_new_tcp(this->ip, this->port);
         
@@ -65,8 +65,8 @@ int ADAM::connect(bool debug) {
             cerr << "Connection to slave failed: " << modbus_strerror(errno) << endl;
             modbus_free(this->ctx);
             modbus_close(this->ctx);
-            retry_count--;
-            cerr << "Retrying... Remaining attempts: " << retry_count << endl;
+            retry_connection--;
+            cerr << "Retrying... Remaining attempts: " << retry_connection << endl;
             sleep(1); // 短暂等待后重试
             continue;
         }
@@ -95,11 +95,10 @@ int ADAM::connect(bool debug) {
         } else if (retval == 0) {
             cerr << "Connection timeout" << endl;
             modbus_free(this->ctx);
-            retry_count--;
-            cerr << "Retrying... Remaining attempts: " << retry_count << endl;
+            retry_connection--;
+            cerr << "Retrying... Remaining attempts: " << retry_connection << endl;
             sleep(1); // 短暂等待后重试
             continue;
-
         }
         // 连接成功
         // this->ctx = ctx;
@@ -158,7 +157,9 @@ int ADAM4051::read_coils() {
     } else {modbus_set_slave(ctx, slave_id);} 
 
     // 读取一次线圈状态,并对线圈状态进行更新
-    if(modbus_read_bits(ctx, 0, total_coils, this->state_coils.data()) == -1) {
+    if(retry_operation([&]() { 
+        cout << "4051(read_coils)" << endl;
+        return modbus_read_bits(ctx, 0, total_coils, this->state_coils.data()); }) == -1) {
         cout << "Failed to read coils: " << modbus_strerror(errno) << endl;
         return -1;
     }
@@ -179,14 +180,10 @@ ADAM4168::~ADAM4168() {}
  * @return int 
  */
 int ADAM4168::InitPulse(float duty_cycles) {
-    // if (ctx == NULL) {
-    //     fprintf(stderr, "Modbus context or file descriptor is invalid\n");
-    //     return -1;
-    // } else {modbus_set_slave(ctx, slave_id);} 
     SetMode({}); // 清空模式设置,否则写入脉冲频率会打开脉冲
-    for(int i = 0; i < 7; i++) {
-        ADAM4168::SetDO(i, 0); // DO置0
-    }
+    vector<uint8_t> DOs(7, 0);
+    SetDOs(0, 7, DOs.data());
+
     // 修改脉冲输出频率 （32bit）
     vector<uint16_t> Toffs(16, 0);
     vector<uint16_t> Tons(16, 0);
@@ -196,18 +193,18 @@ int ADAM4168::InitPulse(float duty_cycles) {
         Toffs[i] = 10000 - Tons[i];
     }
     // 写入脉冲输出高、低延时
-    if(retry_operation([&]() { return modbus_write_registers(ctx, 30, 16, Tons.data()); }) == -1) {
-        cout << "Failed to write registers (InitPulse - Tons): " << modbus_strerror(errno) << endl;
-        return -1;
+    if(retry_operation([&]() { 
+        cout << "4168(InitPulse - Tons)" << endl;
+        return modbus_write_registers(ctx, 30, 16, Tons.data()); }) == -1) {
+            cout << "Failed to write registers (InitPulse - Tons): " << modbus_strerror(errno) << endl;
+            return -1;
     }
-    if(retry_operation([&]() { return modbus_write_registers(ctx, 72, 16, Toffs.data()); }) == -1) {
-        cout << "Failed to write registers (InitPulse - Toffs): " << modbus_strerror(errno) << endl;
-        return -1;
+    if(retry_operation([&]() { 
+        cout << "4168(InitPulse - Toffs)" << endl;
+        return modbus_write_registers(ctx, 72, 16, Toffs.data()); }) == -1) {
+            cout << "Failed to write registers (InitPulse - Toffs): " << modbus_strerror(errno) << endl;
+            return -1;
     }
-    // if(modbus_write_registers(ctx, 30, 16, Tons.data()) == -1 || modbus_write_registers(ctx, 72, 16, Toffs.data()) == -1) {
-    //     cout << "Failed to write registers (InitPulse): " << modbus_strerror(errno) << endl;
-    //     return -1;
-    // }
     return 0;
 }
 
@@ -227,14 +224,12 @@ int ADAM4168::SetMode(const vector<int>& PulseChannel) {
     for(auto i : PulseChannel) {
         channels_mode[i] = 1;
     }
-    if(retry_operation([&]() { return modbus_write_registers(ctx, 64, this->total_channels, channels_mode.data()); }) == -1) {
-        cout << "Failed to write registers (SetMode): " << modbus_strerror(errno) << endl;
-        return -1;
+    if(retry_operation([&]() { 
+        cout << "4168(SetMode)" << endl;
+        return modbus_write_registers(ctx, 64, this->total_channels, channels_mode.data()); }) == -1) {
+            cout << "Failed to write registers (SetMode): " << modbus_strerror(errno) << endl;
+            return -1;
     }
-    // if(modbus_write_registers(ctx, 64, this->total_channels, channels_mode.data()) == -1) {
-    //     cout << "Failed to write registers (SetMode): " << modbus_strerror(errno) << endl;
-    //     return -1;
-    // }
     return 0;
 }
 
@@ -259,14 +254,12 @@ int ADAM4168::StartPulse(const vector<int>& channels, uint16_t pulse_times) {
     for(auto channel : channels) {
         pulse_times_all[channel * 2] = pulse_times;
     }
-    if(retry_operation([&]() { return modbus_write_registers(ctx, 32, this->total_channels * 2, pulse_times_all.data()); }) == -1) {
-        cout << "Failed to write registers (StartPulse): " << modbus_strerror(errno) << endl;
-        return -1;
+    if(retry_operation([&]() { 
+        cout << "4168(StartPulse)" << endl;
+        return modbus_write_registers(ctx, 32, this->total_channels * 2, pulse_times_all.data()); }) == -1) {
+            cout << "Failed to write registers (StartPulse): " << modbus_strerror(errno) << endl;
+            return -1;
     }
-    // if(modbus_write_registers(ctx, 32, this->total_channels * 2, pulse_times_all.data()) == -1) {
-    //     cout << "Failed to write registers (StartPulse): " << modbus_strerror(errno) << endl;
-    //     return -1;
-    // }
     return 0;
 }
 
@@ -276,25 +269,35 @@ int ADAM4168::SetDO(int channels, bool value) {
         return -1;
     } else {modbus_set_slave(ctx, slave_id);} 
 
-    // auto write_operation = [&]() -> int {
-    //     if (modbus_write_bit(ctx, 16 + channels, value) == -1) {
-    //         cerr << "Failed to write registers (SetDO): " << modbus_strerror(errno) << endl;
-    //         return -1; // 操作失败
-    //     }
-    //     return 0; // 操作成功
-    // };
-
-    if(retry_operation([&]() { return modbus_write_bit(ctx, 16 + channels, value); }) == -1) {
-        cerr << "Failed to write registers (SetDO): " << modbus_strerror(errno) << endl;
-        return -1; // 重试用尽，操作失败
+    if(retry_operation([&]() { 
+        cout << "4168(SetDO)" << endl;
+        return modbus_write_bit(ctx, 16 + channels, value); }) == -1) {
+            cerr << "Failed to write registers (SetDO): " << modbus_strerror(errno) << endl;
+            return -1; // 重试用尽，操作失败
     }
     return 0;
+}
 
-    // if(modbus_write_bit(ctx, 16 + channels, value) == -1) {
-    //     cout << "Failed to write registers (SetDO): " << modbus_strerror(errno) << endl;
-    //     return -1;
-    // }
-    // return 0;
+/**
+ * @brief 多通道写入
+ * 
+ * @param start 写入起始位置
+ * @param nb 
+ * @param src 
+ * @return int 
+ */
+int ADAM4168::SetDOs(int start, int nb, const uint8_t *src) {
+    if (ctx == NULL) {
+        fprintf(stderr, "Modbus context or file descriptor is invalid\n");
+        return -1;
+    } else {modbus_set_slave(ctx, slave_id);} 
+    if(retry_operation([&]() { 
+        cout << "4068(write_coils)" << endl;
+        return modbus_write_bits(ctx, 16 + start, nb, src); }) == -1) {
+            cout << "Failed to write coils: " << modbus_strerror(errno) << endl;
+            return -1;
+    }
+    return 0;
 }
 
 ADAM4068::ADAM4068(const ADAM& adam, int slave_id, int total_coils)
@@ -318,13 +321,34 @@ int ADAM4068::write_coil(int ch, bool flag) {
     } else {modbus_set_slave(ctx, slave_id);} 
     int mapped_ch = 16 + ch;
     // 16~23是modbus上的地址，0~7是用户输入的地址
-    if(retry_operation([&]() { return modbus_write_bit(ctx, mapped_ch, flag); }) == -1) {
-        cout << "Failed to write coil: " << modbus_strerror(errno) << endl;
-        return -1;
+    if(retry_operation([&]() { 
+        cout << "4068(write_coil)" << endl;
+        return modbus_write_bit(ctx, mapped_ch, flag); }) == -1) {
+            cout << "Failed to write coil: " << modbus_strerror(errno) << endl;
+            return -1;
     }
-    // if(modbus_write_bit(ctx, mapped_ch, flag) == -1) {
-    //     cout << "Failed to write coil: " << modbus_strerror(errno) << endl;
-    //     return -1;
-    // }
+    return 0;
+}
+
+// 多线圈写入
+/**
+ * @brief 
+ * 
+ * @param start 起始端口
+ * @param nb nbits 
+ * @param src 存放的数据数组指针
+ * @return int 
+ */
+int ADAM4068::write_coils(int start, int nb, const uint8_t *src) {
+    if (ctx == NULL) {
+        fprintf(stderr, "Modbus context or file descriptor is invalid\n");
+        return -1;
+    } else {modbus_set_slave(ctx, slave_id);} 
+    if(retry_operation([&]() { 
+        cout << "4068(write_coils)" << endl;
+        return modbus_write_bits(ctx, 16 + start, nb, src); }) == -1) {
+            cout << "Failed to write coils: " << modbus_strerror(errno) << endl;
+            return -1;
+    }
     return 0;
 }

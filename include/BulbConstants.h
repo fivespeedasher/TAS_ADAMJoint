@@ -1,6 +1,21 @@
 #ifndef BULBCONSTANTS_H
 #define BULBCONSTANTS_H
 
+// ADAM初始化参数
+const int slave_ID_1 = 1; // 从机地址
+const int totalCH_1 = 8; // 从机通道总数
+const int slave_ID_2 = 2;
+const int totalCH_2 = 8;
+const int slave_ID_3 = 3;
+const int totalCH_3 = 8;
+const int slave_ID_4 = 4;
+const int slave_ID_5 = 5;
+const int slave_ID_6 = 6;
+const int totalDI_4 = 16; // 从机DI总数
+const int totalDI_5 = 16;
+const int totalCH_6 = 8;
+const int duty_cycles = 0.5; // 脉冲占空比
+
 // slave_1 io定义
 const int WARNING_LIGHT = 0; // 警示灯
 const int STATUS_LIGHT_YELLOW = 2; // 状态灯（黄）

@@ -27,11 +27,9 @@ int ControlRequest::controlStatusLight(int color) {
 }
 // 关闭状态灯
 int ControlRequest::stopStatusLight() {
-    adam_1.write_coil(STATUS_LIGHT_YELLOW, false);
-    adam_1.write_coil(STATUS_LIGHT_BLUE, false);
-    adam_1.write_coil(STATUS_LIGHT_RED, false);
-    adam_1.write_coil(STATUS_LIGHT_WHITE, false);
-    adam_1.write_coil(STATUS_LIGHT_GREEN, false);
+    // 多线圈写入
+    vector<uint8_t> coils(5, 0);
+    adam_1.write_coils(STATUS_LIGHT_YELLOW, 5, coils.data());
     return 0;
 }
 
@@ -83,8 +81,9 @@ int ControlRequest::RollingToRight(bool whichRoller){
  */
 int ControlRequest::controlDeliverToLeft(bool whichRoller) {
     // 左方阻挡升起 0 1
-    adam_2.write_coil(LEFT_BLOCKER_DOWN, false);
-    adam_2.write_coil(LEFT_BLOCKER_UP, true);
+    vector<uint8_t> coils = {0, 1}; // {LEFT_BLOCKER_DOWN, LEFT_BLOCKER_UP}
+    adam_2.write_coils(LEFT_BLOCKER_DOWN, 2, coils.data());
+
 
     // 根据阻挡到位关DO
     if(waitForPositionSensorState(LEFT_BLOCKER_UP_POSITION, 1) != -1) {
@@ -106,7 +105,7 @@ int ControlRequest::waitForPositionSensorState(int PositionSensor, bool state_sh
         if (state == state_shouldBe) {
             return 0;
         }
-        sleep(0.1); // 每100毫秒检查一次
+        sleep(1); // 每1秒检查一次
     }
     return -1; // 超时未达到期望状态
 }
@@ -119,8 +118,9 @@ int ControlRequest::waitForPositionSensorState(int PositionSensor, bool state_sh
  */
 int ControlRequest::controlDeliverToRight(bool whichRoller) {
     // 右方阻挡升起 0 1
-    adam_2.write_coil(RIGHT_BLOCKER_DOWN, false);
-    adam_2.write_coil(RIGHT_BLOCKER_UP, true);
+    vector<uint8_t> coils = {0, 1}; // {RIGHT_BLOCKER_DOWN, RIGHT_BLOCKER_UP}
+    adam_2.write_coils(RIGHT_BLOCKER_DOWN, 2, coils.data());
+
 
     if(waitForPositionSensorState(RIGHT_BLOCKER_UP_POSITION, 1) != -1) {
         // 右方阻挡升起到位
@@ -134,29 +134,12 @@ int ControlRequest::controlDeliverToRight(bool whichRoller) {
     }
 }
 
-// 停止辊筒输送(不包括下放阻挡)
-int ControlRequest::stopRolling() {
-    // 前辊筒停止
-    adam_2.write_coil(FRONT_ROLLER_LEFT, false);
-    adam_2.write_coil(FRONT_ROLLER_RIGHT, false);
-    // 后辊筒停止
-    adam_2.write_coil(REAR_ROLLER_LEFT, false);
-    adam_2.write_coil(REAR_ROLLER_RIGHT, false);
-    return 0;
-}
-
-// 停止货物输送(包括停止辊筒、下放阻挡)
-int ControlRequest::stopDeliver() {
-    ControlRequest::stopRolling();
-    sleep(1);
-    // 阻挡落下
-    adam_2.write_coil(LEFT_BLOCKER_UP, false);
-    adam_2.write_coil(RIGHT_BLOCKER_UP, false);
-
-    // 阻挡下放
-    adam_2.write_coil(LEFT_BLOCKER_DOWN, true);
-    adam_2.write_coil(RIGHT_BLOCKER_DOWN, true);
-
+// 下放阻挡
+int ControlRequest::blockerDown() {
+    vector<uint8_t> coils(4, 0); // {LEFT_BLOCKER_DOWN, RIGHT_BLOCKER_UP, RIGHT_BLOCKER_DOWN, RIGHT_BLOCKER_UP}
+    coils[LEFT_BLOCKER_DOWN - LEFT_BLOCKER_DOWN] = 1;
+    coils[RIGHT_BLOCKER_DOWN - LEFT_BLOCKER_DOWN] = 1;
+    adam_2.write_coils(LEFT_BLOCKER_DOWN, 4, coils.data());
     // 左阻挡落下到位
     if(waitForPositionSensorState(LEFT_BLOCKER_DOWN_POSITION, 1) != -1) {
         sleep(1);
@@ -173,34 +156,58 @@ int ControlRequest::stopDeliver() {
     return 0;
 }
 
+// 停止辊筒输送(不包括下放阻挡)
+int ControlRequest::stopRolling() {
+    vector<uint8_t> coils(4, 0); // {FRONT_ROLLER_LEFT, FRONT_ROLLER_RIGHT, REAR_ROLLER_LEFT, REAR_ROLLER_RIGHT}
+    adam_2.write_coils(FRONT_ROLLER_LEFT, 4, coils.data());
+    return 0;
+}
+
+// 停止货物输送(包括停止辊筒、下放阻挡)
+int ControlRequest::stopDeliver() {
+    ControlRequest::stopRolling();
+    sleep(1);
+    ControlRequest::blockerDown();
+    return 0;
+}
+
 // 升起左侧卷帘门
 int ControlRequest::riseLeftRollingDoor() {
-    adam_3.write_coil(LEFT_ROLLING_DOOR_DOWN, false);
-    adam_3.write_coil(LEFT_ROLLING_DOOR_UP, true);
+    // adam_3.write_coil(LEFT_ROLLING_DOOR_DOWN, false);
+    // adam_3.write_coil(LEFT_ROLLING_DOOR_UP, true);
+    vector<uint8_t> coils = {1, 0}; // {LEFT_ROLLING_DOOR_UP, LEFT_ROLLING_DOOR_DOWN}
+    adam_3.write_coils(LEFT_ROLLING_DOOR_UP, 2, coils.data());
+
     // TODO 用到位传感器来停下IO输出
     return 0;
 }
 
 // 升起右侧卷帘门
 int ControlRequest::riseRightRollingDoor() {
-    adam_3.write_coil(RIGHT_ROLLING_DOOR_DOWN, false);
-    adam_3.write_coil(RIGHT_ROLLING_DOOR_UP, true);
+    // adam_3.write_coil(RIGHT_ROLLING_DOOR_DOWN, false);
+    // adam_3.write_coil(RIGHT_ROLLING_DOOR_UP, true);
+    vector<uint8_t> coils = {1, 0}; // {RIGHT_ROLLING_DOOR_UP, RIGHT_ROLLING_DOOR_DOWN}
+    adam_3.write_coils(RIGHT_ROLLING_DOOR_UP, 2, coils.data());
     // TODO 用到位传感器来停下IO输出
     return 0;
 }
 
 // 下放左侧卷帘门
 int ControlRequest::downLeftRollingDoor() {
-    adam_3.write_coil(LEFT_ROLLING_DOOR_UP, false);
-    adam_3.write_coil(LEFT_ROLLING_DOOR_DOWN, true);
+    // adam_3.write_coil(LEFT_ROLLING_DOOR_UP, false);
+    // adam_3.write_coil(LEFT_ROLLING_DOOR_DOWN, true);
+    vector<uint8_t> coils = {0, 1}; // {LEFT_ROLLING_DOOR_UP, LEFT_ROLLING_DOOR_DOWN}
+    adam_3.write_coils(LEFT_ROLLING_DOOR_DOWN, 2, coils.data());
     // TODO 用到位传感器来停下IO输出
     return 0;
 }
 
 // 下放右侧卷帘门
 int ControlRequest::downRightRollingDoor() {
-    adam_3.write_coil(RIGHT_ROLLING_DOOR_UP, false);
-    adam_3.write_coil(RIGHT_ROLLING_DOOR_DOWN, true);
+    // adam_3.write_coil(RIGHT_ROLLING_DOOR_UP, false);
+    // adam_3.write_coil(RIGHT_ROLLING_DOOR_DOWN, true);
+    vector<uint8_t> coils = {0, 1}; // {RIGHT_ROLLING_DOOR_UP, RIGHT_ROLLING_DOOR_DOWN}
+    adam_3.write_coils(RIGHT_ROLLING_DOOR_UP, 2, coils.data());
     // TODO 用到位传感器来停下IO输出
     return 0;
 }
@@ -221,16 +228,17 @@ int ControlRequest::stopRollingDoor() {
  * @return int 
  */
 int ControlRequest::controlHorn(int horn) {
-    stopHorn();
-    adam_3.write_coil(horn, true);
+    // stopHorn();
+    // adam_3.write_coil(horn, true);
+    vector<uint8_t> coils(4, 0);
+    coils[horn - HORN_1] = 1;
+    adam_3.write_coils(HORN_1, 4, coils.data());
     return 0;
 }
 // 关闭喇叭
 int ControlRequest::stopHorn() {
-    adam_3.write_coil(HORN_1, false);
-    adam_3.write_coil(HORN_2, false);
-    adam_3.write_coil(HORN_3, false);
-    adam_3.write_coil(HORN_3, false);
+    vector<uint8_t> coils(4, 0);
+    adam_3.write_coils(HORN_1, 4, coils.data());
     return 0;
 }
 
@@ -238,11 +246,12 @@ int ControlRequest::stopHorn() {
 vector<bool> ControlRequest::readPositionSensor() {
     vector<bool> positionSensor;
     adam_4.read_coils();
-    // cout << "Position Sensor : ";
-    for (int i = 0; i < 16; i++) {
-        positionSensor.push_back(adam_4.state_coils[i]);
-        // cout << int(adam_4.state_coils[i]) << " "; // 可用于检查输出
-    }
+    // 用vector的方法复制
+    positionSensor.assign(adam_4.state_coils.begin(), adam_4.state_coils.end());
+
+    // for (int i = 0; i < 16; i++) {
+    //     // cout << int(positionSensor[i]) << " "; // 可用于检查输出
+    // }
     // cout << endl;
     return positionSensor;
 }
