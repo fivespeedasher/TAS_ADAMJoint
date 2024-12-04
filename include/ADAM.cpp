@@ -20,7 +20,7 @@ ADAM::ADAM(const char *ip, int port) {
     this->port = port;
     modbus_t *ctx;
 }
-ADAM::~ADAM() {disconnect();}
+ADAM::~ADAM() {}
 
 
 int ADAM::set_non_blocking(int fd) {

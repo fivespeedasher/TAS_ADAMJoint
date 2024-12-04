@@ -152,6 +152,6 @@ int main() {
         // }
     }
     LEDcontroller.initLED(); // 还原CRRC显示
-    // adamPort2.disconnect(); // 断开连接
+    adamPort2.disconnect(); // 断开连接
     return 0;
 }
